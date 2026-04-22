@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome | User Portal</title>
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+    <div class="login-container">
+        <h2>Welcome to the User Portal</h2>
+        <div id="navButtons" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem;">
+            <a href="./auth/register.html"><button type="button">Register</button></a>
+            <a href="./auth/login.html"><button type="button">Login</button></a>
+            <a id="viewProfileBtn" href="./profile/view.html" style="display:none;"><button type="button">View Profile</button></a>
+            <a id="editProfileBtn" href="./profile/edit.html" style="display:none;"><button type="button">Edit Profile</button></a>
+        </div>
+    </div>
+    <script>
+    // Show View/Edit Profile buttons only if logged in
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            document.getElementById('viewProfileBtn').style.display = '';
+            document.getElementById('editProfileBtn').style.display = '';
+        }
+    });
+    </script>
+</body>
+</html>
