@@ -37,7 +37,10 @@ app.use('/api/product', require('./routes/product'));
 app.use('/api/cart', cartRoutes);
 app.use('/api/customer', customerRoutes);
 app.use('/api/order', orderRoutes);
-app.use('/api/admin',require('./routes/admin.routes'))
+app.use('/api/admin',require('./routes/admin.routes'));
+app.use('/api/admin/customers', require('./routes/adminCustomer.routes'));
+app.use('/api/categories', require('./routes/category.routes'));
+app.use('/api/products', require('./routes/product.routes'));
 
 // Swagger setup
 const swaggerOptions = {

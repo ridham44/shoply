@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const profileController = require('../controllers/profile');
-const { isAuthenticated } = require('../middleware/auth');
+const { isAuthenticated } = require('../middleware/auth.middlewear');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -13,7 +13,7 @@ const storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + '-' + file.originalname);
-    }
+    },
 });
 const upload = multer({ storage: storage });
 
