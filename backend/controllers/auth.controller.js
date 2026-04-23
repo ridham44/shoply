@@ -33,7 +33,7 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ error: 'Failed to reset password.' });
   }
 };
-const User = require('../models/User');
+const User = require('../models/User.model');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 

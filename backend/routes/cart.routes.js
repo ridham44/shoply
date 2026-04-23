@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const cartController = require('../controllers/cart');
+const cartController = require('../controllers/cart.controller');
 const { isAuthenticated } = require('../middleware/auth.middlewear');
 
 // Apply authentication middleware to all cart routes

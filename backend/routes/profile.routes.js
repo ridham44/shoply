@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const profileController = require('../controllers/profile');
+const profileController = require('../controllers/profile.controller');
 const { isAuthenticated } = require('../middleware/auth.middlewear');
 const multer = require('multer');
 const path = require('path');

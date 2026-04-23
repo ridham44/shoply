@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const User = require('../models/User.model');
 
 // View user profile
 exports.viewProfile = async (req, res) => {

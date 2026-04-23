@@ -89,7 +89,7 @@ exports.deleteCartItemByProduct = async (req, res) => {
   }
 };
 const mongoose = require('mongoose');
-const Cart = require('../models/Cart');
+const Cart = require('../models/Cart.model');
 
 // Create a new cart or add item to existing cart (userId from token)
 exports.createOrUpdateCart = async (req, res) => {

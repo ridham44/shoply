@@ -1,6 +1,6 @@
-const Customer = require('../models/Customer');
-const Cart = require('../models/cart');
-const Order = require('../models/order');
+const Customer = require('../models/Customer.model');
+const Cart = require('../models/Cart.model');
+const Order = require('../models/Order.model');
 const status = require('../utils/statusCodes');
 
 exports.getCustomerList = async (req, res) => {
@@ -24,11 +24,7 @@ exports.getCustomerList = async (req, res) => {
         const skip = (pageNumber - 1) * limitNumber;
 
         const [customers, total] = await Promise.all([
-            Customer.find(filter)
-                .select('_id fullName phoneNumber createdAt')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limitNumber),
+            Customer.find(filter).select('_id fullName phoneNumber createdAt').sort({ createdAt: -1 }).skip(skip).limit(limitNumber),
 
             Customer.countDocuments(filter),
         ]);

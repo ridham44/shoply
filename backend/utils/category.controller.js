@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 const Category = require('../models/Category.model');
 const status = require('../utils/statusCodes');
-const uploadToImagekit = require('../utils/uploadToImagekit');
-const { getCategoryImageUrl } = require('../utils/imageUrl');
 
 exports.createCategory = async (req, res) => {
     try {
@@ -19,24 +17,15 @@ exports.createCategory = async (req, res) => {
             });
         }
 
-        let imageData = null;
-
-        if (req.file) {
-            imageData = await uploadToImagekit(req.file, '/categories');
-        }
-
         const category = await Category.create({
             category_name,
-            category_photo: imageData ? imageData.filePath : '',
+            category_photo: req.file ? req.file.filename : '',
         });
 
         return res.status(status.CREATED).json({
             success: true,
             message: 'Category created successfully',
-            data: {
-                ...category.toObject(),
-                category_photo: getCategoryImageUrl(category.category_photo),
-            },
+            data: category,
         });
     } catch (error) {
         return res.status(status.InternalServerError).json({
@@ -46,6 +35,42 @@ exports.createCategory = async (req, res) => {
     }
 };
 
+exports.updateCategory = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { category_name } = req.body;
+
+        const category = await Category.findById(id);
+
+        if (!category) {
+            return res.status(status.NotFound).json({
+                success: false,
+                message: 'Category not found',
+            });
+        }
+
+        if (category_name) {
+            category.category_name = category_name;
+        }
+
+        if (req.file) {
+            category.category_photo = req.file.filename;
+        }
+
+        await category.save();
+
+        return res.status(status.OK).json({
+            success: true,
+            message: 'Category updated successfully',
+            data: category,
+        });
+    } catch (error) {
+        return res.status(status.InternalServerError).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
 exports.getCategoryList = async (req, res) => {
     try {
         const { search, page = 1, limit = 10 } = req.query;
@@ -65,15 +90,10 @@ exports.getCategoryList = async (req, res) => {
             Category.countDocuments(filter),
         ]);
 
-        const formattedCategories = categories.map((category) => ({
-            ...category.toObject(),
-            category_photo: getCategoryImageUrl(category.category_photo),
-        }));
-
         return res.status(status.OK).json({
             success: true,
             message: 'Category list fetched successfully',
-            data: formattedCategories,
+            data: categories,
             meta: {
                 total,
                 page: pageNumber,
@@ -112,70 +132,7 @@ exports.getCategoryById = async (req, res) => {
         return res.status(status.OK).json({
             success: true,
             message: 'Category fetched successfully',
-            data: {
-                ...category.toObject(),
-                category_photo: getCategoryImageUrl(category.category_photo),
-            },
-        });
-    } catch (error) {
-        return res.status(status.InternalServerError).json({
-            success: false,
-            message: error.message,
-        });
-    }
-};
-
-exports.updateCategory = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { category_name } = req.body;
-
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(status.BadRequest).json({
-                success: false,
-                message: 'Invalid category id',
-            });
-        }
-
-        const category = await Category.findById(id);
-
-        if (!category) {
-            return res.status(status.NotFound).json({
-                success: false,
-                message: 'Category not found',
-            });
-        }
-
-        if (category_name) {
-            const existingCategory = await Category.findOne({
-                _id: { $ne: id },
-                category_name: { $regex: `^${category_name}$`, $options: 'i' },
-            });
-
-            if (existingCategory) {
-                return res.status(status.Conflict).json({
-                    success: false,
-                    message: 'Category already exists',
-                });
-            }
-
-            category.category_name = category_name;
-        }
-
-        if (req.file) {
-            const imageData = await uploadToImagekit(req.file, '/categories');
-            category.category_photo = imageData ? imageData.filePath : category.category_photo;
-        }
-
-        await category.save();
-
-        return res.status(status.OK).json({
-            success: true,
-            message: 'Category updated successfully',
-            data: {
-                ...category.toObject(),
-                category_photo: getCategoryImageUrl(category.category_photo),
-            },
+            data: category,
         });
     } catch (error) {
         return res.status(status.InternalServerError).json({

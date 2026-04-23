@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const Product = require('../models/product');
-const Category = require('../models/category');
+const Product = require('../models/Product.model');
+const Category = require('../models/Category.model');
 const status = require('../utils/statusCodes');
 
 exports.createProduct = async (req, res) => {

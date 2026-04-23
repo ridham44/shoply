@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/auth');
+const authController = require('../controllers/auth.controller');
 const { check } = require('express-validator');
-const User = require('../models/User');
+const User = require('../models/User.model');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 
