@@ -1,10 +1,11 @@
 const status = require('../utils/statusCodes');
+const Admin = require('../models/admin.model');
 
 const nameRegex = /^[A-Za-z ]{2,100}$/;
 const phoneRegex = /^[6-9]\d{9}$/;
 const otpRegex = /^\d{4,8}$/;
 
-exports.validateSendRegisterOtp = (req, res, next) => {
+exports.validateSendRegisterOtp = async (req, res, next) => {
     try {
         const { name, phone } = req.body;
 
@@ -36,6 +37,15 @@ exports.validateSendRegisterOtp = (req, res, next) => {
             });
         }
 
+        const existingUser = await Admin.findOne({ phone });
+
+        if (existingUser) {
+            return res.status(status.Conflict).json({
+                success: false,
+                message: 'Phone number already registered',
+            });
+        }
+
         next();
     } catch (error) {
         return res.status(status.InternalServerError).json({
@@ -44,7 +54,6 @@ exports.validateSendRegisterOtp = (req, res, next) => {
         });
     }
 };
-
 exports.validateVerifyRegisterOtp = (req, res, next) => {
     try {
         const { phone, otp } = req.body;
