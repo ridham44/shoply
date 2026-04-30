@@ -135,6 +135,77 @@ exports.getProductList = async (req, res) => {
     }
 };
 
+exports.getProductsByCategory = async (req, res) => {
+    try {
+        const { categoryId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+            return res.status(status.BadRequest).json({
+                success: false,
+                message: 'Invalid category id',
+            });
+        }
+
+        const category = await Category.findById(categoryId);
+
+        if (!category) {
+            return res.status(status.NotFound).json({
+                success: false,
+                message: 'Category not found',
+            });
+        }
+
+        const { search, minPrice, maxPrice, page = 1, limit = 10 } = req.query;
+
+        const filter = { category: categoryId };
+
+        if (search) {
+            filter.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { brand: { $regex: search, $options: 'i' } },
+                { colour: { $regex: search, $options: 'i' } },
+                { size: { $regex: search, $options: 'i' } },
+            ];
+        }
+
+        if (minPrice || maxPrice) {
+            filter.price = {};
+            if (minPrice) filter.price.$gte = Number(minPrice);
+            if (maxPrice) filter.price.$lte = Number(maxPrice);
+        }
+
+        const pageNumber = Number(page) > 0 ? Number(page) : 1;
+        const limitNumber = Number(limit) > 0 ? Number(limit) : 10;
+        const skip = (pageNumber - 1) * limitNumber;
+
+        const [products, total] = await Promise.all([
+            Product.find(filter)
+                .populate('category', 'category_name category_photo')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNumber),
+            Product.countDocuments(filter),
+        ]);
+
+        return res.status(status.OK).json({
+            success: true,
+            message: 'Products fetched successfully',
+            data: products.map(formatProduct),
+            meta: {
+                total,
+                page: pageNumber,
+                limit: limitNumber,
+                totalPages: Math.ceil(total / limitNumber),
+            },
+        });
+    } catch (error) {
+        return res.status(status.InternalServerError).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;

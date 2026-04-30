@@ -1,60 +1,59 @@
 const mongoose = require('mongoose');
 
-const customerSchema = new mongoose.Schema(
+const customerReviewSchema = new mongoose.Schema(
     {
+        productId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product',
+            required: true,
+        },
+
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true,
-            unique: true,
         },
 
-        addressLine1: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-
-        addressLine2: {
+        customerName: {
             type: String,
             default: '',
             trim: true,
         },
 
-        landmark: {
+        customerPhone: {
             type: String,
             default: '',
             trim: true,
         },
 
-        city: {
+        customerEmail: {
+            type: String,
+            default: '',
+            trim: true,
+        },
+
+        customerProfileImage: {
+            type: String,
+            default: '',
+        },
+
+        rating: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 5,
+        },
+
+        review: {
             type: String,
             required: true,
             trim: true,
         },
 
-        state: {
+        status: {
             type: String,
-            required: true,
-            trim: true,
-        },
-
-        pincode: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-
-        country: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-
-        addressType: {
-            type: String,
-            enum: ['Home', 'Work', 'Other'],
-            required: true,
+            enum: ['Active', 'Inactive'],
+            default: 'Active',
         },
 
         createdAt: {
@@ -77,14 +76,14 @@ const customerSchema = new mongoose.Schema(
     },
 );
 
-customerSchema.pre('save', function (next) {
+customerReviewSchema.pre('save', function (next) {
     this.updatedAt = new Date();
     next();
 });
 
-customerSchema.pre('findOneAndUpdate', function (next) {
+customerReviewSchema.pre('findOneAndUpdate', function (next) {
     this.set({ updatedAt: new Date() });
     next();
 });
 
-module.exports = mongoose.models.Customer || mongoose.model('Customer', customerSchema);
+module.exports = mongoose.models.CustomerReview || mongoose.model('CustomerReview', customerReviewSchema);

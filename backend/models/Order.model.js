@@ -12,26 +12,29 @@ const orderItemSchema = new mongoose.Schema({
     productDetails: { type: String, default: '' },
 });
 
-const orderSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        default: null,
+const orderSchema = new mongoose.Schema(
+    {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null,
+        },
+        customer: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Customer',
+            default: null,
+        },
+        items: [orderItemSchema],
+        totalAmount: { type: Number, required: true },
+        paymentMethod: { type: String, required: true },
+        deliveryAddress: { type: String, required: true },
+        orderStatus: {
+            type: String,
+            enum: ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'],
+            default: 'Pending',
+        },
     },
-    customer: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Customer',
-        default: null,
-    },
-    items: [orderItemSchema],
-    totalAmount: { type: Number, required: true },
-    paymentMethod: { type: String, required: true },
-    deliveryAddress: { type: String, required: true },
-    orderStatus: {
-        type: String,
-        enum: ['Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'],
-        default: 'Pending',
-    },
-}, { timestamps: true });
+    { timestamps: true },
+);
 
 module.exports = mongoose.models.Order || mongoose.model('Order', orderSchema);

@@ -3,8 +3,8 @@ const router = express.Router();
 
 const controller = require('../controllers/category.controller');
 const validation = require('../validations/category.validation');
-const upload = require('../middleware/upload.middlewear');
-const auth = require('../middleware/adminAuth.middleware');
+const upload = require('../middleware/upload.middleware');
+const auth = require('../middleware/auth.middleware');
 const adminAuth = require('../middleware/authorizeAdmin.middleware');
 
 router.post('/', auth, adminAuth, upload.single('category_photo'), validation.validateCreateCategory, controller.createCategory);

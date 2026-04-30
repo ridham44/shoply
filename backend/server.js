@@ -18,6 +18,8 @@ const PORT = process.env.PORT || 5001;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/userdb';
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
+
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
@@ -27,7 +29,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Serve frontend static files
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, '../frontend')));+
+
+console.log('JWT_SECRET:', process.env.JWT_SECRET);
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -41,6 +45,7 @@ app.use('/api/admin', require('./routes/admin.routes'));
 app.use('/api/admin/customers', require('./routes/adminCustomer.routes'));
 app.use('/api/categories', require('./routes/category.routes'));
 app.use('/api/products', require('./routes/product.routes'));
+app.use('/api/reviews', require('./routes/customerReview.routes'));
 
 // Swagger setup
 const swaggerOptions = {

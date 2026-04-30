@@ -3,7 +3,7 @@ const router = express.Router();
 
 const controller = require('../controllers/admin.controller');
 const validation = require('../validations/admin.validation');
-const adminAuth = require('../middleware/adminAuth.middleware');
+const adminAuth = require('../middleware/auth.middleware');
 const authorizeAdmin = require('../middleware/authorizeAdmin.middleware');
 
 router.post('/register/send-otp', validation.validateSendRegisterOtp, controller.sendRegisterOtp);

@@ -9,8 +9,8 @@ exports.getBrowserDetail = (req) => {
 exports.getDeviceType = (req) => {
     const userAgent = (req.headers['user-agent'] || '').toLowerCase();
 
-    if (/mobile|android|iphone|ipod/i.test(userAgent)) {
-        return 'Mobile';
+    if (/phone|android|iphone|ipod/i.test(userAgent)) {
+        return 'phone';
     }
 
     if (/ipad|tablet/i.test(userAgent)) {

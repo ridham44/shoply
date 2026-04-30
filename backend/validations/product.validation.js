@@ -8,7 +8,6 @@ exports.validateCreateProduct = (req, res, next) => {
             brand,
             price,
             description,
-            product_images,
             originalPrice,
             size,
             colour,
@@ -16,6 +15,7 @@ exports.validateCreateProduct = (req, res, next) => {
             category,
             product_details,
         } = req.body;
+
 
         if (!name || !String(name).trim()) {
             return res.status(status.BadRequest).json({ success: false, message: 'Name is required' });
@@ -33,8 +33,11 @@ exports.validateCreateProduct = (req, res, next) => {
             return res.status(status.BadRequest).json({ success: false, message: 'Description is required' });
         }
 
-        if (!Array.isArray(product_images) || product_images.length === 0) {
-            return res.status(status.BadRequest).json({ success: false, message: 'At least one product image is required' });
+        if (!req.files || req.files.length === 0) {
+            return res.status(status.BadRequest).json({
+                success: false,
+                message: 'At least one product image is required',
+            });
         }
 
         if (originalPrice === undefined || Number(originalPrice) < 0) {
@@ -53,13 +56,15 @@ exports.validateCreateProduct = (req, res, next) => {
             return res.status(status.BadRequest).json({ success: false, message: 'Valid stock is required' });
         }
 
-        if (!category || !mongoose.Types.ObjectId.isValid(category)) {
+        if (!category || !mongoose.Types.ObjectId.isValid(String(category).trim())) {
             return res.status(status.BadRequest).json({ success: false, message: 'Valid category is required' });
         }
 
         if (!product_details || !String(product_details).trim()) {
             return res.status(status.BadRequest).json({ success: false, message: 'Product details are required' });
         }
+
+        req.body.category = String(category).trim();
 
         next();
     } catch (error) {

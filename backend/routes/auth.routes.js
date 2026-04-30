@@ -1,41 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/auth.controller');
-const { check } = require('express-validator');
-const User = require('../models/User.model');
-const bcrypt = require('bcryptjs');
-const multer = require('multer');
 
-// Multer setup for photo upload
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
-});
-const upload = multer({ storage: storage });
+const controller = require('../controllers/auth.controller');
+const customerAuth = require('../middleware/auth.middleware');
+const upload = require('../middleware/upload.middleware');
+const validation = require('../validations/auth.validation');
 
-// Register route
-router.post('/register', upload.single('photo'), [
-    check('email').isEmail(),
-    check('password').isLength({ min: 6 })
-], authController.register);
+router.post('/register', upload.single('profileImage'), validation.validateRegister, controller.register);
 
-// Login route
-router.post('/login', authController.login);
+router.post('/login', validation.validateLogin, controller.login);
 
-// Forgot password route
-router.post('/forgot-password', [
-    check('email').isEmail()
-], authController.forgotPassword);
+router.get('/profile', customerAuth, controller.getProfile);
 
-// Password reset route
-router.post('/reset-password', [
-    check('email').isEmail(),
-    check('oldPassword').notEmpty(),
-    check('newPassword').isLength({ min: 6 })
-], authController.resetPassword);
+router.put('/profile', customerAuth, upload.single('profileImage'), validation.validateUpdateProfile, controller.updateProfile);
 
+router.post('/reset-password', customerAuth, validation.validateResetPassword, controller.resetPassword);
 module.exports = router;
