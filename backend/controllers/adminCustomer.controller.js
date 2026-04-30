@@ -1,3 +1,4 @@
+const User = require('../models/User.model');
 const Customer = require('../models/Customer.model');
 const Cart = require('../models/Cart.model');
 const Order = require('../models/Order.model');
@@ -7,15 +8,16 @@ exports.getCustomerList = async (req, res) => {
     try {
         const { search, page = 1, limit = 10 } = req.query;
 
-        const filter = {};
+        const filter = {
+            role: 'customer',
+            deletedAt: null,
+        };
 
         if (search) {
             filter.$or = [
-                { fullName: { $regex: search, $options: 'i' } },
-                { phoneNumber: { $regex: search, $options: 'i' } },
-                { city: { $regex: search, $options: 'i' } },
-                { state: { $regex: search, $options: 'i' } },
-                { pincode: { $regex: search, $options: 'i' } },
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { phone: { $regex: search, $options: 'i' } },
             ];
         }
 
@@ -23,16 +25,20 @@ exports.getCustomerList = async (req, res) => {
         const limitNumber = Number(limit) > 0 ? Number(limit) : 10;
         const skip = (pageNumber - 1) * limitNumber;
 
-        const [customers, total] = await Promise.all([
-            Customer.find(filter).select('_id fullName phoneNumber createdAt').sort({ createdAt: -1 }).skip(skip).limit(limitNumber),
+        const [users, total] = await Promise.all([
+            User.find(filter)
+                .select('_id name email phone role createdAt updatedAt')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNumber),
 
-            Customer.countDocuments(filter),
+            User.countDocuments(filter),
         ]);
 
         return res.status(status.OK).json({
             success: true,
-            message: 'Customer list fetched successfully',
-            data: customers,
+            message: 'Customer user list fetched successfully',
+            data: users,
             meta: {
                 total,
                 page: pageNumber,
@@ -50,21 +56,40 @@ exports.getCustomerList = async (req, res) => {
 
 exports.getCustomerDetail = async (req, res) => {
     try {
-        const { customerId } = req.params;
+        const { userId } = req.params;
 
-        const customer = await Customer.findById(customerId).populate('user', 'name email phone role');
+        const user = await User.findOne({
+            _id: userId,
+            role: 'customer',
+            deletedAt: null,
+        }).select('_id name email phone role createdAt updatedAt');
+
+        if (!user) {
+            return res.status(status.NotFound).json({
+                success: false,
+                message: 'Customer user not found',
+            });
+        }
+
+        const customer = await Customer.findOne({
+            userId: user._id,
+            deletedAt: null,
+        }).populate('userId', 'name email phone role');
 
         if (!customer) {
             return res.status(status.NotFound).json({
                 success: false,
-                message: 'Customer not found',
+                message: 'Customer detail not found for this user',
             });
         }
 
         return res.status(status.OK).json({
             success: true,
             message: 'Customer detail fetched successfully',
-            data: customer,
+            data: {
+                user,
+                customer,
+            },
         });
     } catch (error) {
         return res.status(status.InternalServerError).json({
@@ -76,25 +101,34 @@ exports.getCustomerDetail = async (req, res) => {
 
 exports.getCustomerCart = async (req, res) => {
     try {
-        const { customerId } = req.params;
+        const { userId } = req.params;
 
-        const customer = await Customer.findById(customerId);
+        const user = await User.findOne({
+            _id: userId,
+            role: 'customer',
+            deletedAt: null,
+        });
+
+        if (!user) {
+            return res.status(status.NotFound).json({
+                success: false,
+                message: 'Customer user not found',
+            });
+        }
+
+        const customer = await Customer.findOne({
+            userId: user._id,
+            deletedAt: null,
+        });
 
         if (!customer) {
             return res.status(status.NotFound).json({
                 success: false,
-                message: 'Customer not found',
+                message: 'Customer detail not found for this user',
             });
         }
 
-        if (!customer.user) {
-            return res.status(status.NotFound).json({
-                success: false,
-                message: 'This customer is not linked with any user',
-            });
-        }
-
-        const cart = await Cart.findOne({ user: customer.user }).populate('items.productId');
+        const cart = await Cart.findOne({ user: user._id }).populate('items.productId');
 
         if (!cart) {
             return res.status(status.NotFound).json({
@@ -103,14 +137,16 @@ exports.getCustomerCart = async (req, res) => {
             });
         }
 
-        const cartTotal = cart.items.reduce((sum, item) => sum + Number(item.totalPrice || 0), 0);
+        const cartTotal = cart.items.reduce((sum, item) => {
+            return sum + Number(item.totalPrice || 0);
+        }, 0);
 
         return res.status(status.OK).json({
             success: true,
             message: 'Customer cart fetched successfully',
             data: {
+                userId: user._id,
                 customerId: customer._id,
-                userId: customer.user,
                 totalItems: cart.items.length,
                 cartTotal,
                 cart,
@@ -126,15 +162,31 @@ exports.getCustomerCart = async (req, res) => {
 
 exports.getCustomerOrderHistory = async (req, res) => {
     try {
-        const { customerId } = req.params;
+        const { userId } = req.params;
         const { page = 1, limit = 10 } = req.query;
 
-        const customer = await Customer.findById(customerId);
+        const user = await User.findOne({
+            _id: userId,
+            role: 'customer',
+            deletedAt: null,
+        });
+
+        if (!user) {
+            return res.status(status.NotFound).json({
+                success: false,
+                message: 'Customer user not found',
+            });
+        }
+
+        const customer = await Customer.findOne({
+            userId: user._id,
+            deletedAt: null,
+        });
 
         if (!customer) {
             return res.status(status.NotFound).json({
                 success: false,
-                message: 'Customer not found',
+                message: 'Customer detail not found for this user',
             });
         }
 
@@ -143,24 +195,26 @@ exports.getCustomerOrderHistory = async (req, res) => {
         const skip = (pageNumber - 1) * limitNumber;
 
         const filter = {
-            $or: [{ customer: customer._id }, ...(customer.user ? [{ user: customer.user }] : [])],
+            $or: [
+                { customer: customer._id },
+                { user: user._id },
+            ],
         };
 
         const [orders, total] = await Promise.all([
             Order.find(filter)
-                .populate('customer', 'fullName phoneNumber city state')
-                .populate('user', 'name email phone')
+                .populate('customer', 'addressLine1 city state pincode country addressType')
+                .populate('user', 'name email phone role')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limitNumber),
+
             Order.countDocuments(filter),
         ]);
 
         const totalSpent = await Order.aggregate([
             {
-                $match: {
-                    $or: [{ customer: customer._id }, ...(customer.user ? [{ user: customer.user }] : [])],
-                },
+                $match: filter,
             },
             {
                 $group: {

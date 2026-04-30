@@ -1,17 +1,20 @@
 const express = require('express');
 const router = express.Router();
 
-const controller = require('../controllers/adminCustomer.controller');
-const validation = require('../validations/adminCustomer.validation');
-const authMiddleware = require('../middleware/adminAuth.middleware');
-const adminOnly = require('../middleware/authorizeAdmin.middleware');
+const controller = require('../controllers/customer.controller');
+const auth = require('../middleware/auth.middleware');
+const authorizeAdmin = require('../middleware/authorizeAdmin.middleware');
 
-router.get('/', authMiddleware, adminOnly, controller.getCustomerList);
+// Customer user list from User collection
+router.get('/', auth, authorizeAdmin, controller.getCustomerList);
 
-router.get('/:customerId', authMiddleware, adminOnly, validation.validateCustomerId, controller.getCustomerDetail);
+// Customer detail by userId
+router.get('/:userId', auth, authorizeAdmin, controller.getCustomerDetail);
 
-router.get('/:customerId/cart', authMiddleware, adminOnly, validation.validateCustomerId, controller.getCustomerCart);
+// Customer cart by userId
+router.get('/:userId/cart', auth, authorizeAdmin, controller.getCustomerCart);
 
-router.get('/:customerId/order-history', authMiddleware, adminOnly, validation.validateCustomerId, controller.getCustomerOrderHistory);
+// Customer order history by userId
+router.get('/:userId/orders', auth, authorizeAdmin, controller.getCustomerOrderHistory);
 
 module.exports = router;

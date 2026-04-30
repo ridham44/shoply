@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 const Product = require('../models/Product.model');
 const Category = require('../models/Category.model');
 const status = require('../utils/statusCodes');
+const uploadToImagekit = require('../utils/uploadToImagekit');
+const { getProductImageUrl, getCategoryImageUrl } = require('../utils/imageUrl');
+
 
 exports.createProduct = async (req, res) => {
     try {
@@ -10,7 +13,6 @@ exports.createProduct = async (req, res) => {
             brand,
             price,
             description,
-            product_images,
             originalPrice,
             discount,
             size,
@@ -20,13 +22,14 @@ exports.createProduct = async (req, res) => {
             product_details,
         } = req.body;
 
-        const categoryExists = await Category.findById(category);
+        let productImages = [];
 
-        if (!categoryExists) {
-            return res.status(status.BadRequest).json({
-                success: false,
-                message: 'Invalid category',
-            });
+        if (req.files && req.files.length > 0) {
+            const uploadedImages = await Promise.all(
+                req.files.map((file) => uploadToImagekit(file, '/products'))
+            );
+
+            productImages = uploadedImages.map((image) => image.filePath);
         }
 
         const product = await Product.create({
@@ -34,22 +37,23 @@ exports.createProduct = async (req, res) => {
             brand,
             price,
             description,
-            product_images,
+            product_images: productImages,
             originalPrice,
-            discount: discount || 0,
+            discount,
             size,
             colour,
-            stock: stock || 0,
+            stock,
             category,
             product_details,
         });
 
-        const populatedProduct = await Product.findById(product._id).populate('category', 'category_name category_photo');
-
         return res.status(status.CREATED).json({
             success: true,
             message: 'Product created successfully',
-            data: populatedProduct,
+            data: {
+                ...product.toObject(),
+                product_images: product.product_images.map((image) => getProductImageUrl(image)),
+            },
         });
     } catch (error) {
         return res.status(status.InternalServerError).json({
@@ -57,6 +61,23 @@ exports.createProduct = async (req, res) => {
             message: error.message,
         });
     }
+};
+
+const formatProduct = (product) => {
+    const productObj = product.toObject ? product.toObject() : product;
+
+    return {
+        ...productObj,
+        product_images: Array.isArray(productObj.product_images)
+            ? productObj.product_images.map((image) => getProductImageUrl(image))
+            : [],
+        category: productObj.category
+            ? {
+                  ...productObj.category,
+                  category_photo: getCategoryImageUrl(productObj.category.category_photo),
+              }
+            : null,
+    };
 };
 
 exports.getProductList = async (req, res) => {
@@ -74,9 +95,7 @@ exports.getProductList = async (req, res) => {
             ];
         }
 
-        if (category) {
-            filter.category = category;
-        }
+        if (category) filter.category = category;
 
         if (minPrice || maxPrice) {
             filter.price = {};
@@ -100,7 +119,7 @@ exports.getProductList = async (req, res) => {
         return res.status(status.OK).json({
             success: true,
             message: 'Product list fetched successfully',
-            data: products,
+            data: products.map(formatProduct),
             meta: {
                 total,
                 page: pageNumber,
@@ -141,7 +160,7 @@ exports.getProductById = async (req, res) => {
         return res.status(status.OK).json({
             success: true,
             message: 'Product fetched successfully',
-            data: product,
+            data: formatProduct(product),
         });
     } catch (error) {
         return res.status(status.InternalServerError).json({
@@ -182,10 +201,20 @@ exports.updateProduct = async (req, res) => {
             }
         }
 
+        const updateData = { ...req.body };
+
+        if (req.files && req.files.length > 0) {
+            const uploadedImages = await Promise.all(
+                req.files.map((file) => uploadToImagekit(file, '/products'))
+            );
+
+            updateData.product_images = uploadedImages.map((image) => image.filePath);
+        }
+
         const updatedProduct = await Product.findByIdAndUpdate(
             id,
-            { $set: req.body },
-            { new: true, runValidators: true },
+            { $set: updateData },
+            { new: true, runValidators: true }
         )
             .populate('category', 'category_name category_photo')
             .populate('reviews.user', 'name email');
@@ -193,7 +222,7 @@ exports.updateProduct = async (req, res) => {
         return res.status(status.OK).json({
             success: true,
             message: 'Product updated successfully',
-            data: updatedProduct,
+            data: formatProduct(updatedProduct),
         });
     } catch (error) {
         return res.status(status.InternalServerError).json({
