@@ -72,12 +72,12 @@ module.exports = async (req, res, next) => {
             });
         }
 
-        if (session.browserDetail && currentBrowser && session.browserDetail !== currentBrowser) {
-            return res.status(status.Unauthorized).json({
-                success: false,
-                message: 'Browser mismatch detected. Possible stolen token',
-            });
-        }
+        // if (session.browserDetail && currentBrowser && session.browserDetail !== currentBrowser) {
+        //     return res.status(status.Unauthorized).json({
+        //         success: false,
+        //         message: 'Browser mismatch detected. Possible stolen token',
+        //     });
+        // }
 
         req.admin = {
             id: admin._id,
