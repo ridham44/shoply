@@ -82,7 +82,7 @@ const formatProduct = (product) => {
 
 exports.getProductList = async (req, res) => {
     try {
-        const { search, category, minPrice, maxPrice, page = 1, limit = 10 } = req.query;
+        const { search, category, minPrice, maxPrice, fromDate, toDate, page = 1, limit = 10 } = req.query;
 
         const filter = {};
 
@@ -101,6 +101,16 @@ exports.getProductList = async (req, res) => {
             filter.price = {};
             if (minPrice) filter.price.$gte = Number(minPrice);
             if (maxPrice) filter.price.$lte = Number(maxPrice);
+        }
+
+        if (fromDate || toDate) {
+            filter.createdAt = {};
+            if (fromDate) filter.createdAt.$gte = new Date(fromDate);
+            if (toDate) {
+                const to = new Date(toDate);
+                to.setHours(23, 59, 59, 999);
+                filter.createdAt.$lte = to;
+            }
         }
 
         const pageNumber = Number(page) > 0 ? Number(page) : 1;

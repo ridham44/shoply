@@ -51,14 +51,40 @@ exports.createReview = async (req, res) => {
 
 exports.getAllReviews = async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { search, rating, page = 1, limit = 10 } = req.query;
+
+        const filter = { deletedAt: null };
+
+        if (rating) {
+            const ratingNum = Number(rating);
+            if (ratingNum >= 1 && ratingNum <= 5) {
+                filter.rating = ratingNum;
+            }
+        }
+
+        if (search) {
+            const searchRegex = { $regex: search, $options: 'i' };
+
+            const [matchedUsers, matchedProducts] = await Promise.all([
+                User.find({ name: searchRegex }).select('_id'),
+                require('../models/Product.model').find({ name: searchRegex }).select('_id'),
+            ]);
+
+            const userIds = matchedUsers.map((u) => u._id);
+            const productIds = matchedProducts.map((p) => p._id);
+
+            filter.$or = [
+                { userId: { $in: userIds } },
+                { productId: { $in: productIds } },
+            ];
+        }
 
         const pageNumber = Number(page) > 0 ? Number(page) : 1;
         const limitNumber = Number(limit) > 0 ? Number(limit) : 10;
         const skip = (pageNumber - 1) * limitNumber;
 
         const [reviews, total] = await Promise.all([
-            CustomerReview.find({ deletedAt: null })
+            CustomerReview.find(filter)
                 .select('userId productId rating review')
                 .populate('userId', 'name')
                 .populate('productId', 'name')
@@ -66,7 +92,7 @@ exports.getAllReviews = async (req, res) => {
                 .skip(skip)
                 .limit(limitNumber),
 
-            CustomerReview.countDocuments({ deletedAt: null }),
+            CustomerReview.countDocuments(filter),
         ]);
 
         return res.status(status.OK).json({
