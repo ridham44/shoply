@@ -48,12 +48,22 @@ exports.createCategory = async (req, res) => {
 
 exports.getCategoryList = async (req, res) => {
     try {
-        const { search, page = 1, limit = 10 } = req.query;
+        const { search, fromDate, toDate, page = 1, limit = 10 } = req.query;
 
         const filter = {};
 
         if (search) {
             filter.category_name = { $regex: search, $options: 'i' };
+        }
+
+        if (fromDate || toDate) {
+            filter.createdAt = {};
+            if (fromDate) filter.createdAt.$gte = new Date(fromDate);
+            if (toDate) {
+                const to = new Date(toDate);
+                to.setHours(23, 59, 59, 999);
+                filter.createdAt.$lte = to;
+            }
         }
 
         const pageNumber = Number(page) > 0 ? Number(page) : 1;
