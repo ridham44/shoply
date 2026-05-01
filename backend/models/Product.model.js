@@ -17,7 +17,7 @@ const productSchema = new mongoose.Schema(
             },
         ],
         originalPrice: { type: Number, required: true },
-        discount: { type: Number, default: 0, required: true },
+        //discount: { type: Number, default: 0, required: true },
         size: { type: String, required: true },
         colour: { type: String, required: true },
         stock: { type: Number, default: 0, required: true },
