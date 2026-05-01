@@ -27,7 +27,7 @@ exports.getCustomerList = async (req, res) => {
 
         const [users, total] = await Promise.all([
             User.find(filter)
-                .select('_id name email phone role createdAt updatedAt')
+                .select('_id name email phone gender profileImage role createdAt updatedAt')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limitNumber),
@@ -35,10 +35,27 @@ exports.getCustomerList = async (req, res) => {
             User.countDocuments(filter),
         ]);
 
+        const userIds = users.map((u) => u._id);
+
+        const customerDetails = await Customer.find({
+            userId: { $in: userIds },
+            deletedAt: null,
+        }).select('userId addressLine1 addressLine2 landmark city state pincode country addressType');
+
+        const customerMap = {};
+        customerDetails.forEach((c) => {
+            customerMap[c.userId.toString()] = c;
+        });
+
+        const data = users.map((user) => ({
+            ...user.toObject(),
+            customerDetail: customerMap[user._id.toString()] || null,
+        }));
+
         return res.status(status.OK).json({
             success: true,
-            message: 'Customer user list fetched successfully',
-            data: users,
+            message: 'Customer list fetched successfully',
+            data,
             meta: {
                 total,
                 page: pageNumber,
@@ -62,7 +79,7 @@ exports.getCustomerDetail = async (req, res) => {
             _id: userId,
             role: 'customer',
             deletedAt: null,
-        }).select('_id name email phone role createdAt updatedAt');
+        }).select('_id name email phone gender profileImage role createdAt updatedAt');
 
         if (!user) {
             return res.status(status.NotFound).json({
@@ -71,24 +88,42 @@ exports.getCustomerDetail = async (req, res) => {
             });
         }
 
-        const customer = await Customer.findOne({
-            userId: user._id,
-            deletedAt: null,
-        }).populate('userId', 'name email phone role');
+        const [customerDetail, cart, orders] = await Promise.all([
+            Customer.findOne({ userId: user._id, deletedAt: null })
+                .select('-userId -__v -deletedAt'),
 
-        if (!customer) {
-            return res.status(status.NotFound).json({
-                success: false,
-                message: 'Customer detail not found for this user',
-            });
-        }
+            Cart.findOne({ user: user._id })
+                .populate('items.productId', 'name brand price product_images'),
+
+            Order.find({ user: user._id })
+                .select('items totalAmount shippingCharge paymentMethod deliveryAddress orderStatus createdAt')
+                .sort({ createdAt: -1 }),
+        ]);
+
+        const cartTotal = cart
+            ? cart.items.reduce((sum, item) => sum + Number(item.totalPrice || 0), 0)
+            : 0;
+
+        const orderSummary = {
+            totalOrders: orders.length,
+            totalSpent: orders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0),
+        };
 
         return res.status(status.OK).json({
             success: true,
             message: 'Customer detail fetched successfully',
             data: {
-                user,
-                customer,
+                userInfo: user,
+                customerDetail: customerDetail || null,
+                cart: {
+                    totalItems: cart ? cart.items.length : 0,
+                    cartTotal,
+                    items: cart ? cart.items : [],
+                },
+                orderHistory: {
+                    summary: orderSummary,
+                    orders,
+                },
             },
         });
     } catch (error) {
