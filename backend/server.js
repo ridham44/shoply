@@ -46,6 +46,7 @@ app.use('/api/admin/customers', require('./routes/adminCustomer.routes'));
 app.use('/api/categories', require('./routes/category.routes'));
 app.use('/api/products', require('./routes/product.routes'));
 app.use('/api/reviews', require('./routes/customerReview.routes'));
+app.use('/api/notifications', require('./routes/notification.routes'));
 
 // Swagger setup
 const swaggerOptions = {

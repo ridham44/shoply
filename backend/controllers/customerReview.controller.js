@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const CustomerReview = require('../models/customerReview.model');
 const User = require('../models/User.model');
 const status = require('../utils/statusCodes');
+const createNotification = require('../utils/createNotification');
 
 exports.createReview = async (req, res) => {
     try {
@@ -34,6 +35,13 @@ exports.createReview = async (req, res) => {
             customerPhone: user.phone,
             customerEmail: user.email,
             customerProfileImage: user.profileImage,
+        });
+
+        createNotification({
+            type: 'review',
+            title: `${review.rating}-Star Review Received`,
+            message: `${user.name} left a ${review.rating}-star review for a product.`,
+            metadata: { reviewId: review._id, userId: user._id, productId: review.productId },
         });
 
         return res.status(status.CREATED).json({

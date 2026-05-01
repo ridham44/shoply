@@ -5,6 +5,7 @@ const Product = require('../models/Product.model');
 const User = require('../models/User.model');
 const Customer = require('../models/Customer.model');
 const status = require('../utils/statusCodes');
+const createNotification = require('../utils/createNotification');
 
 exports.createOrder = async (req, res) => {
     try {
@@ -70,6 +71,13 @@ exports.createOrder = async (req, res) => {
             totalAmount,
             paymentMethod,
             deliveryAddress,
+        });
+
+        createNotification({
+            type: 'order',
+            title: 'New Order Received',
+            message: `Order #${order._id.toString().slice(-4).toUpperCase()} has been placed by ${user.name}. Total amount: ₹${totalAmount}.`,
+            metadata: { orderId: order._id, userId: user._id },
         });
 
         return res.status(status.CREATED).json({

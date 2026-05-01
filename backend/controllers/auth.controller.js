@@ -5,6 +5,7 @@ const status = require('../utils/statusCodes');
 const uploadToImagekit = require('../utils/uploadToImagekit');
 const { getCustomerProfileImageUrl } = require('../utils/imageUrl');
 const { generateToken } = require('../utils/jwt');
+const createNotification = require('../utils/createNotification');
 
 const formatUser = (user) => {
     const userObj = user.toObject ? user.toObject() : user;
@@ -58,6 +59,13 @@ exports.register = async (req, res) => {
         });
 
         const token = generateToken(user);
+
+        createNotification({
+            type: 'customer',
+            title: 'New Customer Registration',
+            message: `${user.name} just created an account. Welcome them to the platform!`,
+            metadata: { userId: user._id },
+        });
 
         return res.status(status.CREATED).json({
             success: true,
