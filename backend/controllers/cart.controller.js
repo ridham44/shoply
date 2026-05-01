@@ -1,7 +1,7 @@
 // Increment or decrement cart item quantity by productId, colour, and size (userId from token)
 exports.updateCartItemQuantity = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { productId, colour, size, action } = req.body;
     if (!productId || !colour || !size || !action) {
       return res.status(400).json({ message: 'Missing required fields' });
@@ -36,7 +36,7 @@ exports.updateCartItemQuantity = async (req, res) => {
 // Get cart item by productId, colour, and size (userId from token)
 exports.getCartItem = async (req, res) => {
   try {
-  const userId = req.user.userId;
+  const userId = req.user.id;
     const productId = req.params.productId;
     const colour = req.query.colour;
     const size = req.query.size;
@@ -53,7 +53,7 @@ exports.getCartItem = async (req, res) => {
 // Update cart item by productId, colour, and size (userId from token)
 exports.updateCartItemByProduct = async (req, res) => {
   try {
-  const userId = req.user.userId;
+  const userId = req.user.id;
     const productId = req.body.productId;
     const colour = req.body.colour;
     const size = req.body.size;
@@ -73,7 +73,7 @@ exports.updateCartItemByProduct = async (req, res) => {
 // Delete cart item by productId, colour, and size (userId from token)
 exports.deleteCartItemByProduct = async (req, res) => {
   try {
-  const userId = req.user.userId;
+  const userId = req.user.id;
     const productId = req.body.productId;
     const colour = req.body.colour;
     const size = req.body.size;
@@ -94,7 +94,7 @@ const Cart = require('../models/Cart.model');
 // Create a new cart or add item to existing cart (userId from token)
 exports.createOrUpdateCart = async (req, res) => {
   try {
-  const userId = req.user.userId;
+  const userId = req.user.id;
   let item = req.body.item;
   // Calculate totalPrice = price * quantity
   if (item && item.price && item.quantity) {
@@ -116,7 +116,7 @@ exports.createOrUpdateCart = async (req, res) => {
 // Get cart by user (userId from token)
 exports.getCart = async (req, res) => {
   try {
-  const userId = req.user.userId;
+  const userId = req.user.id;
     const carts = await Cart.find({ user: userId });
     if (!carts || carts.length === 0) return res.status(404).json({ message: 'Cart not found' });
     res.json(carts);
@@ -128,7 +128,7 @@ exports.getCart = async (req, res) => {
 // Update cart item (userId from token)
 exports.updateCartItem = async (req, res) => {
   try {
-  const userId = req.user.userId;
+  const userId = req.user.id;
     const itemId = req.body.itemId;
     const update = req.body.update;
     const cart = await Cart.findOne({ user: userId });
@@ -146,7 +146,7 @@ exports.updateCartItem = async (req, res) => {
 // Delete cart item (userId from token)
 exports.deleteCartItem = async (req, res) => {
   try {
-  const userId = req.user.userId;
+  const userId = req.user.id;
     const itemId = req.body.itemId;
     const cart = await Cart.findOne({ user: userId });
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
@@ -161,7 +161,7 @@ exports.deleteCartItem = async (req, res) => {
 // Delete entire cart (userId from token)
 exports.deleteCart = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     if (req.body && req.body.productId) {
       // Delete product from cart
       const productId = req.body.productId;
