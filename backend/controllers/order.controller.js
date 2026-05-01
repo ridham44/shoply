@@ -87,7 +87,7 @@ exports.createOrder = async (req, res) => {
 
 exports.getOrders = async (req, res) => {
     try {
-        const { search, orderStatus, page = 1, limit = 10 } = req.query;
+        const { search, orderStatus, fromDate, toDate, page = 1, limit = 10 } = req.query;
 
         const filter = {};
 
@@ -100,6 +100,16 @@ exports.getOrders = async (req, res) => {
                 { deliveryAddress: { $regex: search, $options: 'i' } },
                 { paymentMethod: { $regex: search, $options: 'i' } },
             ];
+        }
+
+        if (fromDate || toDate) {
+            filter.createdAt = {};
+            if (fromDate) filter.createdAt.$gte = new Date(fromDate);
+            if (toDate) {
+                const to = new Date(toDate);
+                to.setHours(23, 59, 59, 999);
+                filter.createdAt.$lte = to;
+            }
         }
 
         const pageNumber = Number(page) > 0 ? Number(page) : 1;
