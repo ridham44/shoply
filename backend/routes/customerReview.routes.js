@@ -8,6 +8,7 @@ const auth = require('../middleware/auth.middleware');
 
 router.post('/', auth, validation.validateCreateReview, controller.createReview);
 
+router.get('/', auth, controller.getAllReviews);
 router.get('/product/:productId', auth, controller.getReviews);
 
 router.get('/:id', auth, validation.validateReviewId, controller.getReviewById);

@@ -49,6 +49,45 @@ exports.createReview = async (req, res) => {
     }
 };
 
+exports.getAllReviews = async (req, res) => {
+    try {
+        const { page = 1, limit = 10 } = req.query;
+
+        const pageNumber = Number(page) > 0 ? Number(page) : 1;
+        const limitNumber = Number(limit) > 0 ? Number(limit) : 10;
+        const skip = (pageNumber - 1) * limitNumber;
+
+        const [reviews, total] = await Promise.all([
+            CustomerReview.find({ deletedAt: null })
+                .select('userId productId rating review')
+                .populate('userId', 'name')
+                .populate('productId', 'name')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNumber),
+
+            CustomerReview.countDocuments({ deletedAt: null }),
+        ]);
+
+        return res.status(status.OK).json({
+            success: true,
+            message: 'All reviews fetched successfully',
+            data: reviews,
+            meta: {
+                total,
+                page: pageNumber,
+                limit: limitNumber,
+                totalPages: Math.ceil(total / limitNumber),
+            },
+        });
+    } catch (error) {
+        return res.status(status.InternalServerError).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
 exports.getReviews = async (req, res) => {
     try {
         const { productId } = req.params;
