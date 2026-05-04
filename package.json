@@ -2,8 +2,8 @@
   "type": "commonjs",
   "main": "backend/server.js",
   "scripts": {
-    "dev": "nodemon backend/server.js",
-    "start": "node backend/server.js"
+    "dev": "node init && nodemon backend/server.js",
+    "start": "node init && node backend/server.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
