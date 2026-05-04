@@ -159,11 +159,28 @@ exports.markAsRead = async (req, res) => {
 
 exports.markAllAsRead = async (req, res) => {
     try {
-        await Notification.updateMany({ isRemoved: { $ne: true }, isRead: { $ne: true } }, { isRead: true });
+        const { type } = req.query;
+
+        const filter = { isRemoved: { $ne: true }, isRead: { $ne: true } };
+
+        if (type && ['order', 'customer', 'review', 'system'].includes(type)) {
+            filter.type = type;
+        } else if (type) {
+            return res.status(status.BadRequest).json({
+                success: false,
+                message: 'Invalid type. Allowed values: order, customer, review, system',
+            });
+        }
+
+        await Notification.updateMany(filter, { isRead: true });
+
+        const message = type
+            ? `All ${type} notifications marked as read`
+            : 'All notifications marked as read';
 
         return res.status(status.OK).json({
             success: true,
-            message: 'All notifications marked as read',
+            message,
         });
     } catch (error) {
         return res.status(status.InternalServerError).json({
