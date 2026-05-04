@@ -226,6 +226,22 @@ exports.removeNotification = async (req, res) => {
     }
 };
 
+exports.resetAll = async (req, res) => {
+    try {
+        await Notification.updateMany({}, { isRead: false, isRemoved: false });
+
+        return res.status(status.OK).json({
+            success: true,
+            message: 'All notifications reset to unread and restored',
+        });
+    } catch (error) {
+        return res.status(status.InternalServerError).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
 exports.clearAll = async (req, res) => {
     try {
         await Notification.updateMany({ isRemoved: { $ne: true } }, { isRemoved: true });
